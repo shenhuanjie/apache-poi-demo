@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class ExportExcel2007 {
     //默认列宽度
-    private final int DEFAULT_COLUMN_SIZE = 30;
+    private final int DEFAULT_COLUMN_SIZE = 15;
     //刷新写入硬盘数据阀值
     private final int flushRows = 1000;
     //声明一个模板工作薄(写入流式数据)
@@ -138,6 +138,10 @@ public class ExportExcel2007 {
      */
     private void exportExcelTitle(File file, String sheetName, List<String> columnNames, String sheetTitle) {
         Workbook tplWorkBook = new XSSFWorkbook();
+        if (writeDataWorkBook != null) {
+            tplWorkBook = writeDataWorkBook;
+        }
+        currentRowNum = 0;
         Map<String, CellStyle> cellStyleMap = styleMap(tplWorkBook);
         // 表头样式
         CellStyle headStyle = cellStyleMap.get("head");
@@ -149,7 +153,9 @@ public class ExportExcel2007 {
         //最新Excel列索引,从0开始
         //int lastRowIndex = sheet.getLastRowNum();
         // 设置表格默认列宽度
-        sheet.setDefaultColumnWidth(DEFAULT_COLUMN_SIZE);
+        // sheet.setDefaultColumnWidth(DEFAULT_COLUMN_SIZE);
+        // 设置表格自适应宽度
+        sheet.autoSizeColumn(1, true);
         // 合并单元格
         sheet.addMergedRegion(new CellRangeAddress(currentRowNum, currentRowNum, 0, columnNames.size() - 1));
         // 产生表格标题行
@@ -210,7 +216,9 @@ public class ExportExcel2007 {
             throw new IOException("读取Excel模板错误");
         }
         // 设置表格默认列宽度
-        sheet.setDefaultColumnWidth(DEFAULT_COLUMN_SIZE);
+        // sheet.setDefaultColumnWidth(DEFAULT_COLUMN_SIZE);
+        // 设置表格自适应宽度
+        sheet.autoSizeColumn(1, true);
         // 遍历集合数据,产生数据行,前两行为标题行与表头行
         for (List dataRow : objects) {
             Row row = sheet.createRow(currentRowNum);
@@ -224,6 +232,9 @@ public class ExportExcel2007 {
                     } else if (dataObject instanceof Double) {
                         contentCell.setCellStyle(contentDoubleStyle);
                         contentCell.setCellValue(Double.parseDouble(dataObject.toString()));
+                    } else if (dataObject instanceof Float) {
+                        contentCell.setCellStyle(contentDoubleStyle);
+                        contentCell.setCellValue(Float.parseFloat(dataObject.toString()));
                     } else if (dataObject instanceof Long && dataObject.toString().length() == 13) {
                         contentCell.setCellStyle(contentStyle);
                         contentCell.setCellValue(getCnDate(new Date(Long.parseLong(dataObject.toString()))));
